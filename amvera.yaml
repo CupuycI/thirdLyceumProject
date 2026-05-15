@@ -1,15 +1,11 @@
 meta:
-  version: 1.0
-
-project:
-  name: MiddleAgesEconomy
-  language: python
-
-deploy:
-  type: service
-  build:
-    command: pip install -r requirements.txt
-  run:
-    command: python main.py
-    ports:
-      - 80
+  environment: python
+  toolchain:
+    name: pip
+    version: 3.12
+build:
+  requirementsPath: requirements.txt
+run:
+  scriptName: main.py
+  persistenceMount: /data
+  containerPort: 80
