@@ -42,8 +42,6 @@ async def set_commands():
     ]
     await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
 
-    print(True)
-
 
 async def main():
     await set_commands()

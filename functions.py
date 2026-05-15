@@ -9,7 +9,7 @@ from data.trade_agreements import TradeAgreement
 from data.users import User
 from aiogram import types
 
-db_session.global_init("db/blogs.db")
+db_session.global_init("data/db/blogs.db")
 db_sess = db_session.create_session()
 
 
