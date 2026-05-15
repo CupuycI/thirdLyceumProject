@@ -17,18 +17,18 @@ async def update_crystal_rate():
     address = "https://www.cbr-xml-daily.ru/daily_json.js"
     response = requests.get(address).json()
 
-    with open('data/crystal_rate.json', 'w', encoding='utf8') as f:
+    with open('../data/crystal_rate.json', 'w', encoding='utf8') as f:
         json.dump(int(response['Valute']['GBP']['Value']), f)
 
 
 def get_crystal_rate() -> int:
     try:
-        with open("data/crystal_rate.json", "r") as f:
+        with open("../data/crystal_rate.json", "r") as f:
             rate = json.load(f)
 
     except FileNotFoundError:
         update_crystal_rate()
-        with open("data/crystal_rate.json", "r") as f:
+        with open("../data/crystal_rate.json", "r") as f:
             rate = json.load(f)
 
     return rate

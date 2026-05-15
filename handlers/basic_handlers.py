@@ -3,11 +3,11 @@ from aiogram.filters.command import Command
 from functions import add_user
 
 router = Router()
-photo = types.FSInputFile("../data/welcome.png")
 
 
 @router.message(Command("start", "help"))
 async def send_welcome(message: types.Message):
+    photo = types.FSInputFile("../data/welcome.png")
     text = """Добро пожаловать! Я бот, добавляющий экономику в стиле средневековья!
     Команды:
     ℹ️ /profile - профиль
