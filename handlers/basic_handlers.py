@@ -3,7 +3,7 @@ from aiogram.filters.command import Command
 from functions import add_user
 
 router = Router()
-photo = types.FSInputFile("images/welcome.png")
+photo = types.FSInputFile("../data/welcome.png")
 
 
 @router.message(Command("start", "help"))
@@ -32,4 +32,5 @@ async def send_welcome(message: types.Message):
     🕊️ /peace <id/username> - предложить игроку заключить мир
     """
     add_user(message)
-    await message.answer_photo(photo=photo, caption=text)
+    await message.answer_photo(photo=photo)
+    await message.answer(text=text)
