@@ -1,0 +1,15 @@
+meta:
+  version: 1.0
+
+project:
+  name: your-bot-name
+  language: python
+
+deploy:
+  type: service
+  build:
+    command: pip install -r requirements.txt
+  run:
+    command: python bot.py
+    ports:
+      - 80
