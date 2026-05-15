@@ -2,7 +2,7 @@ meta:
   version: 1.0
 
 project:
-  name: your-bot-name
+  name: MiddleAgesEconomy
   language: python
 
 deploy:
@@ -10,6 +10,6 @@ deploy:
   build:
     command: pip install -r requirements.txt
   run:
-    command: python bot.py
+    command: python main.py
     ports:
       - 80
