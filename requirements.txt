@@ -1,0 +1,4 @@
+aiogram == 3.27.0
+dotenv == 0.9.9
+requests == 2.33.1
+sqlalchemy == 2.0.49

@@ -1,0 +1,12 @@
+ORM-модели: coalitions.py, trade_agreements.py, users.py
+
+Работа с контекстом пользователя: взаимодействие с базой данных, которая состоит из coalitions.py, trade_agreements.py,
+users.py
+
+Загрузка и использование файлов: в ответе на команду "/start" и "/help" бот отправляет изображение images/welcome.png и
+текст
+
+Использование стороннего API: используется https://www.cbr-xml-daily.ru/daily_json.js для получения курса фунта
+стерлингов, который определяет курс кристаллов
+
+Хранение данных: db/blogs.db
