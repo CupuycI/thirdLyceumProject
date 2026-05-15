@@ -1,4 +1,4 @@
-from aiogram import Router, types
+from aiogram import Router
 from aiogram.filters.command import Command
 
 from data.coalitions import Coalition
@@ -13,7 +13,7 @@ async def war_player(message: types.Message):
     enemy_user = await get_user(message)
 
     if not enemy_user:
-        await message.answer('Игрок не найден!')
+        await message.answer('❌ Игрок не найден!')
 
     else:
         user = db_sess.get(User, message.from_user.id)
@@ -22,12 +22,12 @@ async def war_player(message: types.Message):
 
         elif user.coalition is None or user.id == db_sess.get(Coalition, user.coalition).leader:
             if user.enemies is not None and str(enemy_user.id) in user.enemies:
-                await message.answer(f'Война {enemy_user.nickname if enemy_user.nickname is not None else
+                await message.answer(f'❌ Война {enemy_user.nickname if enemy_user.nickname is not None else
                 enemy_user.username} уже объявлена!')
                 return
 
             if enemy_user.id == user.id:
-                await message.answer('Вы не можете объявить войну себе!')
+                await message.answer('❌ Вы не можете объявить войну себе!')
                 return
 
             user.enemies = enemy_user.id if user.enemies is None else f'{user.enemies}, {enemy_user.id}'
@@ -40,7 +40,7 @@ async def war_player(message: types.Message):
                 enemy_user.username} объявлена война!')
 
         else:
-            await message.answer('Только лидер коалиции может объявлять войны!')
+            await message.answer('❌ Только лидер коалиции может объявлять войны!')
 
 
 def fight(defender_user, attacker_user, attackers=False):
@@ -76,12 +76,16 @@ async def attack(message: types.Message):
     enemy_user = await get_user(message)
 
     if not enemy_user:
-        await message.answer('Игрок не найден!')
+        await message.answer('❌ Игрок не найден!')
 
     else:
         user = db_sess.get(User, message.from_user.id)
         if not user:
             await send_not_found_user_message(message)
+
+        elif str(enemy_user.id) not in user.enemies and (user.coalition is None or str(enemy_user.id) in
+                                                         db_sess.get(Coalition, user.coalition).enemies):
+            await message.answer("❌ Нельзя напасть без объявления войны!")
 
         else:
             defenders, attackers = fight(enemy_user, user)
@@ -141,7 +145,7 @@ async def attack(message: types.Message):
                     fort_destroyed = True
 
                 money = enemy_user.money // enemy_user.territory_sectors
-                enemy_user.territory_sectors -= 1
+                enemy_user.territory_sectors = min(1, enemy_user.territory_sectors - 1)
                 user.territory_sectors += 1
                 enemy_user.money -= money
                 user.money += money

@@ -13,5 +13,4 @@ class Coalition(SqlAlchemyBase):
     members = sqlalchemy.Column(sqlalchemy.String, default=None)
     army = sqlalchemy.Column(sqlalchemy.Integer)
     enemies = sqlalchemy.Column(sqlalchemy.String, default=None)
-    allied_coalitions = sqlalchemy.Column(sqlalchemy.String, default=None)
     modified_data = sqlalchemy.Column(sqlalchemy.String, default=datetime.datetime.now)

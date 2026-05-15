@@ -20,6 +20,7 @@ class User(SqlAlchemyBase):
     army = sqlalchemy.Column(sqlalchemy.Integer, default=10)
     territory_sectors = sqlalchemy.Column(sqlalchemy.Integer, default=1)
     money = sqlalchemy.Column(sqlalchemy.Integer, default=100)
+    crystals = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     trade_agreements = sqlalchemy.Column(sqlalchemy.String, default=None)
     enemies = sqlalchemy.Column(sqlalchemy.String, default=None)
 

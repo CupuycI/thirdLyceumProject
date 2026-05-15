@@ -4,9 +4,7 @@ from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from data.coalitions import Coalition
-from data.trade_agreements import TradeAgreement
 from functions import *
-from main import bot
 
 router = Router()
 
@@ -31,10 +29,10 @@ async def create_coalition(message: types.Message):
         if user.coalition is None:
             text = message.text.split()
             if len(text) < 2 or not text[1]:
-                await message.answer('Неверное название!')
+                await message.answer('❌ Неверное название!')
 
             elif db_sess.get(Coalition, text[1]):
-                await message.answer('Коалиция уже существует!')
+                await message.answer('❌ Коалиция уже существует!')
 
             else:
                 coalition = Coalition(
@@ -51,7 +49,7 @@ async def create_coalition(message: types.Message):
                 await message.answer(f'Коалиция {coalition.title} успешно создана!')
 
         else:
-            await message.answer('Уже состоите в коалиции!')
+            await message.answer('❌ Уже состоите в коалиции!')
 
     else:
         await send_not_found_user_message(message)
@@ -65,26 +63,26 @@ async def invite_player(message: types.Message):
         return
 
     if not user.coalition:
-        await message.answer('Вы не состоите в коалиции!')
+        await message.answer('❌ Вы не состоите в коалиции!')
         return
 
     coalition = db_sess.get(Coalition, user.coalition)
     if user.id != int(coalition.leader):
-        await message.answer('Только лидер коалиции может приглашать других игроков!')
+        await message.answer('❌ Только лидер коалиции может приглашать других игроков!')
         return
 
     second_user = await get_user(message)
 
     if not second_user:
-        await message.answer('Игрок не найден!')
+        await message.answer('❌ Игрок не найден!')
         return
 
     if second_user.coalition:
-        await message.answer('Игрок уже состоит в коалиции!')
+        await message.answer('❌ Игрок уже состоит в коалиции!')
         return
 
     if coalition.enemies and str(second_user.id) in coalition.enemies:
-        await message.answer('Игрок является противником коалиции!')
+        await message.answer('❌ Игрок является противником коалиции!')
         return
 
     invite_data = InviteCallback(
@@ -243,10 +241,10 @@ async def fort_yes_button(callback_query: types.CallbackQuery):
                 reply_markup=None)
 
         else:
-            await callback_query.message.answer('Не хватает монет!')
+            await callback_query.message.answer('❌ Не хватает монет!')
 
     else:
-        await callback_query.message.answer('Не хватает секторов территорий!')
+        await callback_query.message.answer('❌ Не хватает секторов территорий!')
 
 
 @router.message(Command("build_fort", "построить_форт"))
@@ -265,10 +263,10 @@ async def build_fort(message: types.Message):
             )
 
         else:
-            await message.answer('Не хватает монет!')
+            await message.answer('❌ Не хватает монет!')
 
     else:
-        await message.answer('Не хватает секторов территорий!')
+        await message.answer('❌ Не хватает секторов территорий!')
 
 
 class TradeAgreementCallback(CallbackData, prefix='trade'):
@@ -287,11 +285,11 @@ async def trade_agreement(message: types.Message):
     second_user = await get_user(message)
 
     if not second_user:
-        await message.answer('Игрок не найден!')
+        await message.answer('❌ Игрок не найден!')
         return
 
     if user.id == second_user.id:
-        await message.answer('Нельзя заключить торговой договор с самим собой!')
+        await message.answer('❌ Нельзя заключить торговой договор с самим собой!')
         return
 
     else:
@@ -360,7 +358,7 @@ async def trade_yes_button(callback_query: types.CallbackQuery, callback_data: T
             reply_markup=None)
 
     else:
-        await callback_query.message.answer('Не хватает монет!')
+        await callback_query.message.answer('❌ Не хватает монет!')
 
 
 class TradeAgreementCallback2(CallbackData, prefix='trade2'):
@@ -445,4 +443,442 @@ async def trade_agreement_yes_button(callback_query: types.CallbackQuery, callba
             reply_markup=None)
 
     else:
-        await callback_query.message.answer('Не хватает монет!')
+        await callback_query.message.answer('❌ Не хватает монет!')
+
+
+@router.message(Command("hire_researcher", "нанять_учёного"))
+async def hire_researcher(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if user:
+        if user.money >= 100:
+            await message.answer(text="Нанять учёного за 100 монет?", reply_markup=await get_hire_choice(user.id))
+
+        else:
+            await message.answer("❌ Не хватает монет! Нужно 100 монет для найма учёного!")
+
+    else:
+        await send_not_found_user_message(message)
+
+
+async def get_hire_choice(user_id) -> types.InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"hire_no:{user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=f"hire_yes:{user_id}")
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("hire_no:"))
+async def hire_no_button(callback_query: types.CallbackQuery):
+    if int(callback_query.data.split(':')[1]) != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Отменено!")
+    await callback_query.message.edit_text(
+    "Отменено!",
+    reply_markup=None
+    )
+
+
+@router.callback_query(F.data.startswith("hire_yes:"))
+async def hire_yes_button(callback_query: types.CallbackQuery):
+    id_ = int(callback_query.data.split(':')[1])
+    if id_ != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, id_)
+    if not user:
+        await send_not_found_user_message(callback_query.message)
+        return
+
+    if user.money < 100:
+        await callback_query.message.edit_text("❌ Не хватает монет! Нужно 100 монет!")
+        return
+
+    user.money -= 100
+    user.researchers += 1
+    db_sess.commit()
+    await callback_query.answer("Учёный нанят!")
+    await callback_query.message.edit_text(
+    "Учёный нанят!",
+    reply_markup=None
+    )
+
+
+@router.message(Command("develop_tech"))
+async def develop_technology(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if user:
+        points = 100 * user.technology_level
+        if user.money >= points:
+            if user.research_points >= points:
+                await message.answer(text=f"Повысить уровень технологий за {points} монет и {points} "
+                                          f"очков исследований?",
+                                     reply_markup=await get_develop_tech_choice(user.id))
+
+            else:
+                await message.answer(f"❌ Не хватает очков исследований! Нужно {points} очков исследований!")
+
+        else:
+            await message.answer(f"❌ Не хватает монет! Нужно {points} монет!")
+
+    else:
+        await send_not_found_user_message(message)
+
+
+async def get_develop_tech_choice(user_id) -> types.InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"tech_no:{user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=f"tech_yes:{user_id}")
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("tech_no:"))
+async def tech_no_button(callback_query: types.CallbackQuery):
+    if int(callback_query.data.split(':')[1]) != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Отменено!")
+    await callback_query.message.edit_text(
+    "Отменено!",
+    reply_markup=None
+    )
+
+
+@router.callback_query(F.data.startswith("tech_yes:"))
+async def tech_yes_button(callback_query: types.CallbackQuery):
+    id_ = int(callback_query.data.split(':')[1])
+    if id_ != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, id_)
+    if not user:
+        await send_not_found_user_message(callback_query.message)
+        return
+
+    points = user.technology_level * 100
+
+    if user.money < points:
+        await callback_query.message.edit_text(f"❌ Не хватает монет! Нужно {points} монет!")
+        return
+
+    if user.research_points < points:
+        await callback_query.message.edit_text(f"❌ Не хватает очков исследований! Нужно {points} очков исследований!")
+        return
+
+    user.money -= points
+    user.research_points -= points
+    user.technology_level += 1
+    db_sess.commit()
+    await callback_query.answer("Уровень технологий повышен!")
+    await callback_query.message.edit_text(
+    "Уровень технологий повышен!",
+    reply_markup=None
+    )
+
+
+@router.message(Command("develop_economy"))
+async def develop_economy(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if user:
+        if user.technology_level > user.economy_level:
+            points = 100 * user.economy_level
+            if user.money >= points:
+                await message.answer(text=f"Повысить уровень экономики за {points} монет?",
+                                     reply_markup=await get_develop_economy_choice(user.id))
+
+            else:
+                await message.answer(f"❌ Не хватает монет! Нужно {points} монет!")
+
+
+        else:
+            await message.answer(f"❌ Недостаточный уровень технологий! Нужен {user.economy_level + 1} "
+                                 f"уровень технологий!")
+
+    else:
+        await send_not_found_user_message(message)
+
+
+async def get_develop_economy_choice(user_id) -> types.InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"economy_no:{user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=f"economy_yes:{user_id}")
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("economy_no:"))
+async def economy_no_button(callback_query: types.CallbackQuery):
+    if int(callback_query.data.split(':')[1]) != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Отменено!")
+    await callback_query.message.edit_text(
+        "Отменено!",
+        reply_markup=None
+    )
+
+
+@router.callback_query(F.data.startswith("economy_yes:"))
+async def economy_yes_button(callback_query: types.CallbackQuery):
+    id_ = int(callback_query.data.split(':')[1])
+    if id_ != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, id_)
+    if not user:
+        await send_not_found_user_message(callback_query.message)
+        return
+
+    points = user.economy_level * 100
+
+    if user.money < points:
+        await callback_query.message.edit_text(f"❌ Не хватает монет! Нужно {points} монет!")
+        return
+
+    user.money -= points
+    user.economy_level += 1
+    db_sess.commit()
+    await callback_query.answer("Уровень экономики повышен!")
+    await callback_query.message.edit_text(
+        "Уровень экономики повышен!",
+        reply_markup=None
+    )
+
+
+@router.message(Command("settle_territory"))
+async def settle_territory(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if user:
+        points = 50 * user.territory_sectors
+        if user.money >= points:
+            await message.answer(text=f"Отправить колонистов в новый сектор территорий за {points} монет?",
+                                     reply_markup=await get_settle_choice(user.id))
+
+        else:
+            await message.answer(f"❌ Не хватает монет! Нужно {points} монет!")
+
+    else:
+        await send_not_found_user_message(message)
+
+
+async def get_settle_choice(user_id) -> types.InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"settle_no:{user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=f"settle_yes:{user_id}")
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("settle_no:"))
+async def settle_no_button(callback_query: types.CallbackQuery):
+    if int(callback_query.data.split(':')[1]) != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Отменено!")
+    await callback_query.message.edit_text(
+        "Отменено!",
+        reply_markup=None
+    )
+
+
+@router.callback_query(F.data.startswith("settle_yes:"))
+async def settle_yes_button(callback_query: types.CallbackQuery):
+    id_ = int(callback_query.data.split(':')[1])
+    if id_ != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, id_)
+    if not user:
+        await send_not_found_user_message(callback_query.message)
+        return
+
+    points = user.territory_sectors * 50
+
+    if user.money < points:
+        await callback_query.message.edit_text(f"❌ Не хватает монет! Нужно {points} монет!")
+        return
+
+    user.money -= points
+    user.territory_sectors += 1
+    db_sess.commit()
+    await callback_query.answer("Освоен новый сектор территорий!")
+    await callback_query.message.edit_text(
+        "Освоен новый сектор территорий!",
+        reply_markup=None
+    )
+
+
+class PeaceCallback(CallbackData, prefix='peace'):
+    first_user_id: int
+    second_user_id: int
+
+
+@router.message(Command('peace', 'мир'))
+async def peace(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if not user:
+        await send_not_found_user_message(message)
+        return
+
+    second_user = await get_user(message)
+
+    if not second_user:
+        await message.answer('❌ Игрок не найден!')
+        return
+
+    if user.id == second_user.id:
+        await message.answer('❌ Нельзя заключить мирный договор с самим собой!')
+        return
+
+    elif str(second_user.id) not in user.enemies:
+        await message.answer('❌ Вы не находитесь в состоянии войны с этим игроком!')
+
+    else:
+        await message.answer(
+            f"Заключить мирный договор с "
+            f"{second_user.nickname if second_user.nickname is not None else second_user.username}({second_user.id})",
+            reply_markup=await get_peace_choice(user.id, second_user.id)
+        )
+
+
+async def get_peace_choice(first_user_id, second_user_id) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"peace_no:{first_user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=PeaceCallback(
+                    first_user_id=first_user_id,
+                    second_user_id=second_user_id
+                ).pack())
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("peace_no:"))
+async def peace_no_button(callback_query: types.CallbackQuery):
+    if callback_query.from_user.id != int(callback_query.data.split(':')[1]):
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Отмена!")
+    await callback_query.message.edit_text(
+    "Отмена!",
+    reply_markup=None
+    )
+
+
+@router.callback_query(PeaceCallback.filter())
+async def peace_yes_button(callback_query: types.CallbackQuery, callback_data: PeaceCallback):
+    if callback_query.from_user.id != callback_data.first_user_id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, callback_data.first_user_id)
+    second_user = db_sess.get(User, callback_data.second_user_id)
+
+    await callback_query.message.answer(text=f"{'@' + second_user.username if second_user.username else 
+    second_user.nickname if second_user.nickname else ''} заключить мирный договор с "
+    f"{user.nickname if user.nickname is not None else user.username}({user.id})",
+    reply_markup=await get_peace_choice2(callback_data))
+    await callback_query.answer("Заявка отправлена!")
+    await callback_query.message.edit_text(
+        "Заявка отправлена!",
+        reply_markup=None)
+
+
+class PeaceCallback2(CallbackData, prefix='trade2'):
+    first_user_id: int
+    second_user_id: int
+
+
+async def get_peace_choice2(callback_data: PeaceCallback) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Нет", callback_data=f"peace_no2:{callback_data.second_user_id}"),
+                InlineKeyboardButton(text="Да", callback_data=PeaceCallback2(
+                    first_user_id=callback_data.first_user_id,
+                    second_user_id=callback_data.second_user_id
+                ).pack())
+            ]
+        ]
+    )
+    return keyboard
+
+
+@router.callback_query(F.data.startswith("peace_no2:"))
+async def peace_no_button2(callback_query: types.CallbackQuery):
+    if int(callback_query.data.split(':')[1]) != callback_query.from_user.id:
+        await wrong_button(callback_query)
+        return
+
+    await callback_query.answer("Заявка отклонена!")
+    await callback_query.message.edit_text(
+    "Заявка отклонена!",
+    reply_markup=None
+    )
+
+
+@router.callback_query(PeaceCallback2.filter())
+async def peace_yes_button2(callback_query: types.CallbackQuery, callback_data: TradeAgreementCallback):
+    if callback_query.from_user.id != callback_data.second_user_id:
+        await wrong_button(callback_query)
+        return
+
+    user = db_sess.get(User, callback_data.first_user_id)
+    second_user = db_sess.get(User, callback_data.second_user_id)
+
+    user.enemies = delete_id(second_user.id, user.enemies)
+    second_user.enemies = delete_id(user.id, second_user.enemies)
+    db_sess.commit()
+
+
+@router.message(Command('buy_crystals', 'купить_кристаллы'))
+async def buy_crystals(message: types.Message):
+    user = db_sess.get(User, message.from_user.id)
+    if not user:
+        await send_not_found_user_message(message)
+        return
+
+    crystals = await get_crystals_from_message(message)
+    if not crystals:
+        return
+
+    money = crystals * get_crystal_rate()
+    if money > user.money:
+        await message.answer(f"❌ Не хватает монет! У вас {user.money} монет, а нужно {money}!")
+        return
+
+
+    user.money -= money
+    user.crystals += crystals
+    db_sess.commit()
+    await message.answer(f'{crystals} кристаллов успешно куплено за {money} монет!')

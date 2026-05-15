@@ -1,8 +1,7 @@
-from aiogram import Router, types
+from aiogram import Router
 from aiogram.filters.command import Command
 
 from data.coalitions import Coalition
-from data.trade_agreements import TradeAgreement
 from functions import *
 
 router = Router()
@@ -20,17 +19,17 @@ async def profile(message: types.Message):
             enemies = ', '.join([i.nickname if i.nickname is not None else i.username for i in enemies])
         text = f"""
 {user.nickname if user.nickname else user.username}
-Начало правления: {user.modified_data}
-Деньги: {user.money}
-Уровень экономики: {user.economy_level}
-Уровень технологий: {user.technology_level}
-Исследователи: {user.researchers}
-Очки исследований: {user.research_points}
-Воины: {user.army}
-Форты: {user.forts}
-Секторы территории: {user.territory_sectors}
-Коалиция: {user.coalition if user.coalition is not None else 'нет'}
-Противники: {enemies}
+👑 Начало правления: {user.modified_data}
+🪙 Деньги: {user.money}
+💰 Уровень экономики: {user.economy_level}
+🛠️ Уровень технологий: {user.technology_level}
+🧑‍🔬 Исследователи: {user.researchers}
+🧪 Очки исследований: {user.research_points}
+🥷 Воины: {user.army}
+🏰 Форты: {user.forts}
+🌲 Секторы территории: {user.territory_sectors}
+🏛️ Коалиция: {user.coalition if user.coalition is not None else 'нет'}
+👿 Противники: {enemies}
 """
         await message.answer(text)
 
@@ -74,13 +73,13 @@ async def profit(message: types.Message):
 async def coalition_profile(message: types.Message):
     text = message.text.split()
     if len(text) < 2 or not text[1]:
-        await message.answer('Неверное название!')
+        await message.answer('❌ Неверное название!')
         return
 
     coalition = db_sess.get(Coalition, text[1])
 
     if not coalition:
-        await message.answer('Коалиция не найдена!')
+        await message.answer('❌ Коалиция не найдена!')
 
     else:
         update_coalition_data(coalition)
@@ -97,11 +96,15 @@ async def coalition_profile(message: types.Message):
         text = f"""
 {coalition.title}
 
-Лидер: {leader.nickname if leader.nickname is not None else leader.username}
-Участники: {members}
-Армия: {coalition.army}
-Союзные коалиции: {coalition.allied_coalitions if coalition.allied_coalitions else 'нет'}
-Противники: {coalition.enemies if coalition.enemies else 'нет'}
+👑 Лидер: {leader.nickname if leader.nickname is not None else leader.username}
+👥 Участники: {members}
+🥷 Армия: {coalition.army}
+👿 Противники: {coalition.enemies if coalition.enemies else 'нет'}
 Дата создания: {coalition.modified_data}
 """
         await message.answer(text)
+
+
+@router.message(Command('crystals_rate', "курс_кристаллов"))
+async def crystals_rate(message: types.Message):
+    await message.answer(f"Курс кристаллов равен {get_crystal_rate()}")
