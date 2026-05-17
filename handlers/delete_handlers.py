@@ -55,11 +55,12 @@ async def disband_coalition(message: types.Message):
     members = coalition.members[::]
     db_sess.delete(coalition)
     db_sess.commit()
-    for id_ in members.split(', '):
-        member = db_sess.get(User, int(id_))
-        if member:
-            await message.answer(f"{'@' + member.username if member.username else 
-            member.nickname if member.nickname else ''} коалиция распущена!")
+    if members:
+        for id_ in members.split(', '):
+            member = db_sess.get(User, int(id_))
+            if member:
+                await message.answer(f"{'@' + member.username if member.username else 
+                member.nickname if member.nickname else ''} коалиция распущена!")
 
     await message.answer(f"{'@' + user.username if user.username else
     user.nickname if user.nickname else ''} коалиция распущена!")

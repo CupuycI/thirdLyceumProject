@@ -21,6 +21,7 @@ async def profile(message: types.Message):
 {user.nickname if user.nickname else user.username}
 👑 Начало правления: {user.modified_data}
 🪙 Деньги: {user.money}
+💎 Кристаллы: {user.crystals}
 💰 Уровень экономики: {user.economy_level}
 🛠️ Уровень технологий: {user.technology_level}
 🧑‍🔬 Исследователи: {user.researchers}

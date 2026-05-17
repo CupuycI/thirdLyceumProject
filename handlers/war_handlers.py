@@ -51,6 +51,9 @@ def fight(defender_user, attacker_user, attackers=False):
         update_user_data(attacker_user)
         attackers = attacker_user.army
 
+    if attackers == 0 or defenders == 0:
+        return defenders, attackers
+
     if attacker_user.technology_level > defender_user.technology_level:
         defenders -= int(defenders / 100 * ((attacker_user.technology_level - defender_user.technology_level) * 5))
 
@@ -58,16 +61,14 @@ def fight(defender_user, attacker_user, attackers=False):
         attackers -= int(attackers / 100 * (defender_user.technology_level - attacker_user.technology_level) * 5)
 
     if defenders > attackers:
-        warriors = max(attackers // 5, attackers % 5)
-        defenders -= warriors
-        attackers -= warriors
+        defenders -= attackers
+        attackers = 0
 
     else:
-        warriors = max(defenders // 5, defenders % 5)
-        attackers -= warriors
-        defenders -= warriors
+        attackers -= defenders
+        defenders = 0
 
-    return defenders, warriors
+    return defenders, attackers
 
 
 @router.message(Command('attack', 'атаковать'))
